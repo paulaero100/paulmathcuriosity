@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ep. 001 — Double Pendulum · Chaos & Curiosity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@300;400&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #04030d; --surface: rgba(255,255,255,0.035);
+    --border: rgba(255,255,255,0.07);
+    --gold: #d4a843; --gold-dim: rgba(212,168,67,0.12);
+    --cyan: #4fc3f7; --text: #ddd8c4;
+    --text-dim: rgba(221,216,196,0.45); --text-muted: rgba(221,216,196,0.22);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; overflow-x: hidden; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 3rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(4,3,13,0.9); backdrop-filter: blur(12px);
+  }
+  .nav-logo { font-family: var(--serif); font-size: 1.1rem; font-weight: 300; color: var(--text); text-decoration: none; }
+  .nav-logo span { color: var(--gold); }
+  .nav-back { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+  .nav-back:hover { color: var(--gold); }
+
+  .page-wrap { max-width: 1100px; margin: 0 auto; padding: 8rem 3rem 6rem; }
+
+  .ep-header { margin-bottom: 3rem; }
+  .ep-eyebrow {
+    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .ep-eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .ep-title { font-family: var(--serif); font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 300; line-height: 1.1; margin-bottom: 1rem; }
+  .ep-mystery { font-family: var(--serif); font-size: 1.2rem; font-style: italic; color: var(--text-dim); line-height: 1.7; max-width: 680px; margin-bottom: 1.5rem; }
+  .ep-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ep-tag { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 9px; border: 1px solid var(--border); color: var(--text-dim); border-radius: 2px; }
+
+  .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5px; margin: 3rem 0; }
+
+  /* VIDEO */
+  .video-block { background: var(--surface); border: 1px solid var(--border); padding: 0; overflow: hidden; }
+  .video-label { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+  .video-embed { position: relative; padding-bottom: 56.25%; background: #000; }
+  .video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+  .video-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 2rem; text-align: center; }
+  .video-placeholder .yt-icon { width: 48px; height: 48px; background: #ff0000; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .video-placeholder .yt-icon::after { content: '▶'; color: white; font-size: 18px; margin-left: 3px; }
+  .video-placeholder p { font-size: 0.8rem; color: var(--text-dim); line-height: 1.6; }
+  .video-placeholder a { font-family: var(--mono); font-size: 0.65rem; color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold-dim); padding-bottom: 2px; }
+
+  /* SIMULATION */
+  .sim-block { background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; }
+  .sim-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+  .sim-label { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); }
+  .sim-status { font-family: var(--mono); font-size: 0.58rem; color: var(--gold); letter-spacing: 0.08em; display: flex; align-items: center; gap: 5px; }
+  .sim-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: pulse 1.5s infinite; }
+  .sim-canvas-wrap { flex: 1; position: relative; min-height: 280px; }
+  .sim-canvas-wrap canvas { display: block; width: 100%; height: 100%; position: absolute; inset: 0; background: #060411; }
+  .sim-controls { padding: 0.75rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .sim-btn { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 12px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
+  .sim-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .sim-stat { font-family: var(--mono); font-size: 0.58rem; color: var(--text-muted); margin-left: auto; }
+
+  /* EXPLANATION */
+  .explanation { grid-column: 1 / -1; background: var(--surface); border: 1px solid var(--border); padding: 2.5rem; }
+  .exp-title { font-family: var(--serif); font-size: 1.8rem; font-weight: 300; margin-bottom: 1.5rem; }
+  .exp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; }
+  .exp-block {}
+  .exp-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem; }
+  .exp-text { font-size: 0.85rem; font-weight: 300; color: var(--text-dim); line-height: 1.8; }
+
+  .math-block { grid-column: 1 / -1; background: rgba(212,168,67,0.04); border: 1px solid rgba(212,168,67,0.15); padding: 1.5rem 2rem; font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); line-height: 2; overflow-x: auto; }
+
+  /* NAV ARROWS */
+  .ep-nav { display: flex; justify-content: space-between; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+  .ep-nav-link { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+  .ep-nav-link:hover { color: var(--gold); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .page-wrap { padding: 6rem 1.5rem 4rem; }
+    .content-grid { grid-template-columns: 1fr; }
+    .exp-grid { grid-template-columns: 1fr; }
+    .explanation { padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../../index.html">Chaos <span>&</span> Curiosity</a>
+  <a class="nav-back" href="../../index.html">← All Episodes</a>
+</nav>
+
+<div class="page-wrap">
+  <div class="ep-header">
+    <div class="ep-eyebrow">Episode 001 · Chaos Theory</div>
+    <h1 class="ep-title">Double Pendulum</h1>
+    <p class="ep-mystery">"Why do two nearly identical starting points lead to completely different futures — and what does that tell us about free will, weather, and the limits of prediction?"</p>
+    <div class="ep-tags">
+      <span class="ep-tag">Chaos Theory</span>
+      <span class="ep-tag">Classical Mechanics</span>
+      <span class="ep-tag">Determinism</span>
+      <span class="ep-tag">Lyapunov Exponent</span>
+    </div>
+  </div>
+
+  <div class="content-grid">
+
+    <!-- VIDEO -->
+    <div class="video-block">
+      <div class="video-label">YouTube Episode</div>
+      <div class="video-embed">
+        <!-- REPLACE YOUR_VIDEO_ID with the actual YouTube video ID after upload -->
+        <!-- Example: if URL is youtube.com/watch?v=abc123 then use abc123 -->
+        <div class="video-placeholder" id="videoPlaceholder">
+          <div class="yt-icon"></div>
+          <p>YouTube video will appear here after upload.<br>Replace <code>YOUR_VIDEO_ID</code> in the HTML with your actual video ID.</p>
+          <a href="https://youtube.com/@yourchannel" target="_blank">Visit Channel →</a>
+        </div>
+        <!-- UNCOMMENT THIS after uploading to YouTube:
+        <iframe
+          src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
+          title="Double Pendulum — Chaos & Curiosity"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+        -->
+      </div>
+    </div>
+
+    <!-- SIMULATION -->
+    <div class="sim-block">
+      <div class="sim-header">
+        <span class="sim-label">Live Simulation</span>
+        <span class="sim-status"><span class="sim-dot"></span>Running</span>
+      </div>
+      <div class="sim-canvas-wrap">
+        <canvas id="simCanvas"></canvas>
+      </div>
+      <div class="sim-controls">
+        <button class="sim-btn" onclick="resetSim()">Reset</button>
+        <button class="sim-btn" onclick="toggleTwin()">Toggle chaos twin</button>
+        <span class="sim-stat" id="simStat">divergence: 0px</span>
+      </div>
+    </div>
+
+    <!-- EXPLANATION -->
+    <div class="explanation">
+      <div class="exp-title">Why this matters</div>
+      <div class="exp-grid">
+        <div class="exp-block">
+          <div class="exp-label">The Setup</div>
+          <div class="exp-text">A double pendulum is just two pendulums attached end-to-end. Simple classical mechanics — completely deterministic, governed by Newton's laws. No randomness anywhere in the system.</div>
+        </div>
+        <div class="exp-block">
+          <div class="exp-label">The Mystery</div>
+          <div class="exp-text">Start two identical double pendulums at positions just 0.001° apart. Within seconds they're in completely different states. Change initial conditions by a billionth — the future is unrecognizable. This is the butterfly effect, mathematically exact.</div>
+        </div>
+        <div class="exp-block">
+          <div class="exp-label">The Implication</div>
+          <div class="exp-text">Weather prediction fails past ~10 days not because our computers are too slow, but because the atmosphere is a chaotic system. Perfect prediction requires infinite precision in measuring initial conditions — which is physically impossible.</div>
+        </div>
+        <div class="math-block">
+// Equation of motion for θ₁ (angle of first pendulum):<br>
+// θ̈₁ = [ -g(2m₁+m₂)sin(θ₁) - m₂g·sin(θ₁-2θ₂) - 2sin(θ₁-θ₂)m₂(θ̇₂²L₂ + θ̇₁²L₁cos(θ₁-θ₂)) ]<br>
+//       ─────────────────────────────────────────────────────────────────────────────────────<br>
+//       L₁ · (2m₁ + m₂ - m₂cos(2θ₁-2θ₂))<br><br>
+// Lyapunov exponent λ > 0 confirms chaos: nearby trajectories diverge exponentially as e^(λt)
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content-grid -->
+
+  <div class="ep-nav">
+    <span></span>
+    <a class="ep-nav-link" href="../../index.html#episodes">Next Episode →</a>
+  </div>
+</div><!-- end page-wrap -->
+
+<script>
+const cv = document.getElementById('simCanvas');
+const ctx = cv.getContext('2d');
+
+let pens = [];
+let showTwin = true;
+let animId;
+
+function makePen(a1, a2, col) {
+  return { a1, a2, v1:0, v2:0, trail:[], col };
+}
+
+function resetSim() {
+  pens = [makePen(Math.PI*0.75, Math.PI*0.5, '#d4a843')];
+  if (showTwin) pens.push(makePen(Math.PI*0.75+0.003, Math.PI*0.5, '#4fc3f7'));
+}
+
+function toggleTwin() {
+  showTwin = !showTwin;
+  resetSim();
+}
+
+function stepP(p) {
+  const g=9.81, dt=0.05, L=80, m=10, d=p.a1-p.a2;
+  const D = 2*m - m*Math.cos(2*d);
+  const a1 = (-g*(2*m)*Math.sin(p.a1)-m*g*Math.sin(p.a1-2*p.a2)-2*Math.sin(d)*m*(p.v2*p.v2*L+p.v1*p.v1*L*Math.cos(d)))/(L*D);
+  const a2 = (2*Math.sin(d)*(m*p.v1*p.v1*L+g*m*Math.cos(p.a1)+p.v2*p.v2*L*m*Math.cos(d)))/(L*D);
+  p.v1+=a1*dt; p.v2+=a2*dt; p.a1+=p.v1*dt; p.a2+=p.v2*dt;
+}
+
+function draw() {
+  const W = cv.offsetWidth * devicePixelRatio;
+  const H = cv.offsetHeight * devicePixelRatio;
+  if (cv.width !== W || cv.height !== H) {
+    cv.width = W; cv.height = H;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+  }
+  const dW = cv.offsetWidth, dH = cv.offsetHeight;
+  ctx.fillStyle = 'rgba(6,4,17,0.2)'; ctx.fillRect(0,0,dW,dH);
+  const ox = dW/2, oy = dH*0.32;
+
+  pens.forEach(p => {
+    for(let i=0;i<4;i++) stepP(p);
+    const x1=ox+80*Math.sin(p.a1), y1=oy+80*Math.cos(p.a1);
+    const x2=x1+80*Math.sin(p.a2), y2=y1+80*Math.cos(p.a2);
+    p.trail.push([x2,y2]); if(p.trail.length>300) p.trail.shift();
+
+    if(p.trail.length>1) {
+      ctx.beginPath();
+      p.trail.forEach(([tx,ty],i) => {
+        ctx.globalAlpha = (i/p.trail.length)*0.85;
+        i===0 ? ctx.moveTo(tx,ty) : ctx.lineTo(tx,ty);
+      });
+      ctx.strokeStyle = p.col; ctx.lineWidth = 1.8;
+      ctx.globalAlpha = 1; ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(ox,oy,3,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(x1,y1,4,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(x2,y2,6,0,Math.PI*2);
+    ctx.fillStyle=p.col; ctx.fill();
+  });
+
+  if(pens.length===2 && pens[0].trail.length && pens[1].trail.length) {
+    const t0 = pens[0].trail.at(-1), t1 = pens[1].trail.at(-1);
+    const d = Math.hypot(t0[0]-t1[0], t0[1]-t1[1]);
+    document.getElementById('simStat').textContent = 'divergence: ' + d.toFixed(1) + 'px';
+  }
+
+  animId = requestAnimationFrame(draw);
+}
+
+resetSim();
+draw();
+</script>
+</body>
+</html>
