@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chaos & Curiosity — Math Simulations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@300;400&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #04030d;
+    --surface: rgba(255,255,255,0.035);
+    --surface-hover: rgba(255,255,255,0.065);
+    --border: rgba(255,255,255,0.07);
+    --gold: #d4a843;
+    --gold-dim: rgba(212,168,67,0.15);
+    --cyan: #4fc3f7;
+    --cyan-dim: rgba(79,195,247,0.12);
+    --text: #ddd8c4;
+    --text-dim: rgba(221,216,196,0.45);
+    --text-muted: rgba(221,216,196,0.25);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* STARFIELD */
+  #starfield {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 3rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(4,3,13,0.85);
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--gold); }
+
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a {
+    font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim); text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* HERO */
+  .hero {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 6rem 2rem 4rem;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem; font-weight: 300;
+    letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    opacity: 0; animation: fadeUp 1s 0.2s forwards;
+  }
+
+  .hero-title {
+    font-family: var(--serif);
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.5rem;
+    opacity: 0; animation: fadeUp 1s 0.4s forwards;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    font-size: 1rem; font-weight: 300;
+    color: var(--text-dim);
+    max-width: 500px;
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    opacity: 0; animation: fadeUp 1s 0.6s forwards;
+  }
+
+  .hero-canvas-wrap {
+    position: relative;
+    width: min(560px, 90vw);
+    height: 260px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 3rem;
+    opacity: 0; animation: fadeUp 1s 0.8s forwards;
+  }
+
+  .hero-canvas-wrap canvas {
+    display: block; width: 100%; height: 100%;
+    background: transparent;
+  }
+
+  .hero-canvas-label {
+    position: absolute; bottom: 10px; right: 14px;
+    font-family: var(--mono);
+    font-size: 0.6rem; letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  .scroll-hint {
+    font-family: var(--mono);
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    opacity: 0; animation: fadeUp 1s 1.2s forwards;
+  }
+
+  .scroll-line {
+    width: 1px; height: 40px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollPulse 2s infinite;
+  }
+
+  /* EPISODES SECTION */
+  .episodes-section {
+    position: relative; z-index: 1;
+    padding: 5rem 3rem 8rem;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: 2.5rem; font-weight: 300;
+  }
+
+  .section-meta {
+    font-family: var(--mono);
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* EPISODE GRID */
+  .ep-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 1.5px;
+  }
+
+  .ep-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    cursor: pointer;
+    transition: background 0.3s, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+  }
+
+  .ep-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--gold-dim), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .ep-card:hover { background: var(--surface-hover); border-color: rgba(212,168,67,0.2); }
+  .ep-card:hover::before { opacity: 1; }
+
+  .ep-num {
+    font-family: var(--mono);
+    font-size: 0.65rem; font-weight: 300;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.2rem;
+  }
+
+  .ep-title {
+    font-family: var(--serif);
+    font-size: 1.7rem; font-weight: 300;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+  }
+
+  .ep-mystery {
+    font-size: 0.82rem; font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.7;
+    font-style: italic;
+    margin-bottom: 1.5rem;
+  }
+
+  .ep-tags {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .ep-tag {
+    font-family: var(--mono);
+    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 9px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 2px;
+  }
+
+  .ep-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .ep-date {
+    font-family: var(--mono);
+    font-size: 0.62rem; color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .ep-arrow {
+    font-size: 0.75rem; color: var(--gold);
+    transition: transform 0.2s;
+  }
+
+  .ep-card:hover .ep-arrow { transform: translateX(4px); }
+
+  .ep-card.coming-soon {
+    opacity: 0.4; cursor: default; pointer-events: none;
+  }
+
+  .ep-card.coming-soon .ep-num { color: var(--text-muted); }
+
+  /* COMING SOON CARD */
+  .ep-placeholder {
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: space-between;
+  }
+
+  /* ABOUT STRIP */
+  .about-strip {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 4rem 3rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 3rem;
+    max-width: 1300px; margin: 0 auto;
+  }
+
+  .about-item {}
+  .about-label {
+    font-family: var(--mono);
+    font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 0.75rem;
+  }
+  .about-text {
+    font-size: 0.88rem; font-weight: 300;
+    color: var(--text-dim); line-height: 1.8;
+  }
+
+  /* FOOTER */
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 2rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .footer-logo {
+    font-family: var(--serif);
+    font-size: 1rem; font-weight: 300;
+    color: var(--text-dim);
+  }
+
+  .footer-links {
+    display: flex; gap: 1.5rem;
+  }
+
+  .footer-links a {
+    font-family: var(--mono);
+    font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-muted); text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; } 50% { opacity: 1; }
+  }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { padding: 5rem 1.5rem 3rem; }
+    .episodes-section { padding: 3rem 1.5rem 5rem; }
+    .ep-grid { grid-template-columns: 1fr; }
+    .about-strip { grid-template-columns: 1fr; padding: 2rem 1.5rem; gap: 2rem; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; padding: 1.5rem; }
+    .section-header { flex-direction: column; gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<nav>
+  <a class="nav-logo" href="index.html">Chaos <span>&</span> Curiosity</a>
+  <div class="nav-links">
+    <a href="#episodes">Episodes</a>
+    <a href="https://youtube.com/@yourchannel" target="_blank">YouTube</a>
+    <a href="https://github.com/yourusername/mathsim-site" target="_blank">GitHub</a>
+    <a href="#about">About</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">Mathematics · Chaos · Mystery</div>
+  <h1 class="hero-title">
+    The universe<br>hides in <em>equations</em>
+  </h1>
+  <p class="hero-sub">
+    Every episode, one mathematical mystery — visualized live. Watch the simulation, then understand why the universe behaves this way.
+  </p>
+
+  <div class="hero-canvas-wrap">
+    <canvas id="heroCanvas"></canvas>
+    <div class="hero-canvas-label">double pendulum · chaos theory · ep. 001</div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span>explore episodes</span>
+  </div>
+</section>
+
+<section class="episodes-section" id="episodes">
+  <div class="section-header">
+    <h2 class="section-title">All Episodes</h2>
+    <span class="section-meta" id="ep-count">Loading...</span>
+  </div>
+
+  <div class="ep-grid" id="epGrid">
+    <!-- Episodes injected by JS -->
+  </div>
+</section>
+
+<section class="about-strip" id="about">
+  <div class="about-item">
+    <div class="about-label">What this is</div>
+    <div class="about-text">Each episode explores a different mathematical phenomenon — chaos, turbulence, emergence — through live interactive simulation you can run yourself in the browser.</div>
+  </div>
+  <div class="about-item">
+    <div class="about-label">How to use it</div>
+    <div class="about-text">Watch the YouTube video first, then come here to interact with the simulation directly. Change parameters, observe the system, and go deeper than the video can show.</div>
+  </div>
+  <div class="about-item">
+    <div class="about-label">Open source</div>
+    <div class="about-text">Every simulation is open source on GitHub. Fork it, modify it, use it for your own learning. If you build something cool, open a pull request.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Chaos & Curiosity</div>
+  <div class="footer-links">
+    <a href="https://youtube.com/@yourchannel" target="_blank">YouTube</a>
+    <a href="https://github.com/yourusername/mathsim-site" target="_blank">GitHub</a>
+    <a href="mailto:you@email.com">Contact</a>
+  </div>
+</footer>
+
+<script>
+// ── STARFIELD ────────────────────────────────────────────────
+const sfCv = document.getElementById('starfield');
+const sfCtx = sfCv.getContext('2d');
+let stars = [];
+
+function initStars() {
+  sfCv.width = window.innerWidth; sfCv.height = window.innerHeight;
+  stars = Array.from({length: 180}, () => ({
+    x: Math.random() * sfCv.width,
+    y: Math.random() * sfCv.height,
+    r: Math.random() * 1.2,
+    o: Math.random() * 0.5 + 0.1,
+    s: Math.random() * 0.3 + 0.1
+  }));
+}
+
+function drawStars() {
+  sfCtx.clearRect(0, 0, sfCv.width, sfCv.height);
+  stars.forEach(s => {
+    s.o += (Math.random() - 0.5) * 0.02;
+    s.o = Math.max(0.05, Math.min(0.6, s.o));
+    sfCtx.beginPath();
+    sfCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    sfCtx.fillStyle = `rgba(212,168,67,${s.o})`;
+    sfCtx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+
+window.addEventListener('resize', initStars);
+initStars(); drawStars();
+
+// ── HERO PENDULUM ────────────────────────────────────────────
+const hcv = document.getElementById('heroCanvas');
+const hctx = hcv.getContext('2d');
+
+const pens = [
+  { a1: Math.PI*0.75, a2: Math.PI*0.5, v1:0, v2:0, trail:[], col:'rgba(212,168,67,' },
+  { a1: Math.PI*0.75+0.003, a2: Math.PI*0.5, v1:0, v2:0, trail:[], col:'rgba(79,195,247,' }
+];
+
+function stepP(p) {
+  const g=9.81,dt=0.05,L=70,m=10,d=p.a1-p.a2;
+  const D=2*m-m*Math.cos(2*d);
+  const a1=(-g*(2*m)*Math.sin(p.a1)-m*g*Math.sin(p.a1-2*p.a2)-2*Math.sin(d)*m*(p.v2*p.v2*L+p.v1*p.v1*L*Math.cos(d)))/(L*D);
+  const a2=(2*Math.sin(d)*(m*p.v1*p.v1*L+g*m*Math.cos(p.a1)+p.v2*p.v2*L*m*Math.cos(d)))/(L*D);
+  p.v1+=a1*dt; p.v2+=a2*dt; p.a1+=p.v1*dt; p.a2+=p.v2*dt;
+}
+
+function heroLoop() {
+  const W = hcv.offsetWidth * 2, H = hcv.offsetHeight * 2;
+  if (hcv.width !== W) { hcv.width = W; hcv.height = H; }
+  hcv.style.width = '100%'; hcv.style.height = '100%';
+  hctx.scale(1,1);
+  hctx.fillStyle = 'rgba(4,3,13,0.22)'; hctx.fillRect(0,0,W,H);
+  const ox = W/2, oy = H*0.38;
+  pens.forEach(p => {
+    for(let i=0;i<3;i++) stepP(p);
+    const x1=ox+70*Math.sin(p.a1), y1=oy+70*Math.cos(p.a1);
+    const x2=x1+70*Math.sin(p.a2), y2=y1+70*Math.cos(p.a2);
+    p.trail.push([x2,y2]); if(p.trail.length>280) p.trail.shift();
+    if(p.trail.length>2) {
+      hctx.beginPath();
+      p.trail.forEach(([tx,ty],i) => {
+        hctx.globalAlpha = (i/p.trail.length)*0.9;
+        i===0 ? hctx.moveTo(tx,ty) : hctx.lineTo(tx,ty);
+      });
+      hctx.strokeStyle = p.col + '1)'; hctx.lineWidth = 1.5;
+      hctx.globalAlpha = 1; hctx.stroke();
+    }
+    hctx.strokeStyle = 'rgba(255,255,255,0.1)'; hctx.lineWidth = 1;
+    hctx.beginPath(); hctx.moveTo(ox,oy); hctx.lineTo(x1,y1); hctx.lineTo(x2,y2); hctx.stroke();
+    hctx.fillStyle = p.col + '0.9)';
+    hctx.beginPath(); hctx.arc(x2,y2,5,0,Math.PI*2); hctx.fill();
+    hctx.fillStyle='rgba(255,255,255,0.4)';
+    hctx.beginPath(); hctx.arc(x1,y1,3,0,Math.PI*2); hctx.fill();
+  });
+  requestAnimationFrame(heroLoop);
+}
+heroLoop();
+
+// ── EPISODES DATA ────────────────────────────────────────────
+// TO ADD A NEW EPISODE: add an object to this array and push to GitHub
+const EPISODES = [
+  {
+    num: '001',
+    title: 'Double Pendulum',
+    mystery: 'Why do two nearly identical starting points lead to completely different futures?',
+    tags: ['Chaos Theory', 'Classical Mechanics', 'Determinism'],
+    date: '2024-01-01',
+    youtube: 'YOUR_YOUTUBE_ID_HERE',
+    path: 'episodes/ep1/',
+    live: true
+  },
+  // ─── PASTE NEW EPISODES BELOW THIS LINE ───────────────────
+  // {
+  //   num: '002',
+  //   title: 'Reaction Diffusion',
+  //   mystery: 'How do leopard spots form from pure mathematics?',
+  //   tags: ['Pattern Formation', 'Biology', 'PDEs'],
+  //   date: '2024-01-08',
+  //   youtube: 'YOUR_YOUTUBE_ID_HERE',
+  //   path: 'episodes/ep2/',
+  //   live: true
+  // },
+];
+
+// Coming soon placeholders (auto-fills remaining slots)
+const UPCOMING = [
+  { num: '002', title: 'Reaction Diffusion', mystery: 'How do leopard spots form from pure mathematics?', tags: ['Pattern Formation', 'Biology'] },
+  { num: '003', title: 'Lorenz Attractor', mystery: 'A butterfly in Brazil causes a tornado in Texas.', tags: ['Strange Attractors', 'Weather'] },
+  { num: '004', title: 'Flocking & Emergence', mystery: '1000 birds, 3 simple rules — where does intelligence come from?', tags: ['Emergence', 'Swarm Intelligence'] },
+  { num: '005', title: '3-Body Problem', mystery: 'Three masses, one equation, infinite chaos.', tags: ['Gravity', 'n-Body', 'Unsolved'] },
+  { num: '006', title: 'Wave Interference', mystery: 'Two ripples collide and create silence — why?', tags: ['Wave Physics', 'Quantum Hints'] },
+];
+
+function renderEpisodes() {
+  const grid = document.getElementById('epGrid');
+  const total = EPISODES.length + UPCOMING.length;
+  document.getElementById('ep-count').textContent = EPISODES.length + ' episodes live · ' + UPCOMING.length + ' upcoming';
+
+  EPISODES.forEach(ep => {
+    const card = document.createElement('a');
+    card.href = ep.path;
+    card.className = 'ep-card';
+    card.innerHTML = `
+      <div class="ep-num">Episode ${ep.num}</div>
+      <div class="ep-title">${ep.title}</div>
+      <p class="ep-mystery">"${ep.mystery}"</p>
+      <div class="ep-tags">${ep.tags.map(t=>`<span class="ep-tag">${t}</span>`).join('')}</div>
+      <div class="ep-footer">
+        <span class="ep-date">${ep.date}</span>
+        <span class="ep-arrow">→</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  UPCOMING.forEach(ep => {
+    const card = document.createElement('div');
+    card.className = 'ep-card coming-soon ep-placeholder';
+    card.innerHTML = `
+      <div>
+        <div class="ep-num">Episode ${ep.num} — coming soon</div>
+        <div class="ep-title">${ep.title}</div>
+        <p class="ep-mystery">"${ep.mystery}"</p>
+        <div class="ep-tags">${ep.tags.map(t=>`<span class="ep-tag">${t}</span>`).join('')}</div>
+      </div>
+      <div class="ep-footer" style="border-top:1px solid var(--border);padding-top:1.25rem;width:100%;display:flex;align-items:center;justify-content:space-between;">
+        <span class="ep-date">— / — / ——</span>
+        <span style="font-family:var(--mono);font-size:0.6rem;color:var(--text-muted);letter-spacing:0.1em;">IN PRODUCTION</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+renderEpisodes();
+</script>
+</body>
+</html>
